@@ -1,0 +1,53 @@
+{
+  "settings": {
+    "name": "Pizza Taraz",
+    "slogan": "Горячая пицца • комбо • закуски",
+    "city": "Тараз",
+    "address": "",
+    "whatsapp": "+7 707 526 9442",
+    "instagram": "",
+    "open": "10:00",
+    "close": "00:00",
+    "deliveryFee": 600,
+    "freeFrom": 7000,
+    "minOrder": 2500,
+    "pickup": true,
+    "notice": "Вся продукция халал. Время доставки — 40–60 минут.",
+    "logo": "",
+    "hero": ""
+  },
+  "categories": [
+    {"id": "pizza", "name": "Пицца 30 см"},
+    {"id": "big", "name": "Пицца 40 см"},
+    {"id": "combo", "name": "Комбо"},
+    {"id": "snacks", "name": "Закуски"},
+    {"id": "drinks", "name": "Напитки"},
+    {"id": "sauce", "name": "Соусы"}
+  ],
+  "items": [
+    {"id": "p1", "cat": "pizza", "name": "Маргарита", "desc": "Томатный соус, моцарелла, помидоры, базилик", "price": 2500, "old": 2800, "weight": "30 см", "img": "", "badge": "", "hidden": false},
+    {"id": "p2", "cat": "pizza", "name": "Пепперони", "desc": "Томатный соус, моцарелла, пепперони (халал)", "price": 2900, "old": 3200, "weight": "30 см", "img": "", "badge": "Хит", "hidden": false},
+    {"id": "p3", "cat": "pizza", "name": "Куриная с грибами", "desc": "Сливочный соус, моцарелла, курица, шампиньоны, красный лук", "price": 3100, "old": 0, "weight": "30 см", "img": "", "badge": "", "hidden": false},
+    {"id": "p4", "cat": "pizza", "name": "Четыре сыра", "desc": "Сливочный соус, моцарелла, чеддер, пармезан, дорблю", "price": 3300, "old": 0, "weight": "30 см", "img": "", "badge": "", "hidden": false},
+    {"id": "p5", "cat": "pizza", "name": "Барбекю", "desc": "Соус барбекю, моцарелла, говядина, курица, лук, болгарский перец", "price": 3400, "old": 3700, "weight": "30 см", "img": "", "badge": "Новинка", "hidden": false},
+    {"id": "p6", "cat": "pizza", "name": "Мясная", "desc": "Томатный соус, моцарелла, говядина, пепперони, колбаски (всё халал)", "price": 3500, "old": 0, "weight": "30 см", "img": "", "badge": "", "hidden": false},
+    {"id": "p7", "cat": "pizza", "name": "Овощная", "desc": "Томатный соус, моцарелла, перец, помидоры, грибы, маслины, кукуруза", "price": 2700, "old": 0, "weight": "30 см", "img": "", "badge": "", "hidden": false},
+    {"id": "p8", "cat": "pizza", "name": "Детская", "desc": "Томатный соус, моцарелла, сосиски (халал), картофель фри", "price": 2600, "old": 0, "weight": "30 см", "img": "", "badge": "", "hidden": false},
+    {"id": "b1", "cat": "big", "name": "Пепперони XL", "desc": "Томатный соус, двойная моцарелла, пепперони (халал)", "price": 4300, "old": 4700, "weight": "40 см", "img": "", "badge": "Хит", "hidden": false},
+    {"id": "b2", "cat": "big", "name": "Куриная с грибами XL", "desc": "Сливочный соус, моцарелла, курица, шампиньоны", "price": 4500, "old": 0, "weight": "40 см", "img": "", "badge": "", "hidden": false},
+    {"id": "b3", "cat": "big", "name": "Мясная XL", "desc": "Томатный соус, моцарелла, говядина, пепперони, колбаски", "price": 4900, "old": 0, "weight": "40 см", "img": "", "badge": "", "hidden": false},
+    {"id": "c1", "cat": "combo", "name": "Комбо на двоих", "desc": "Любая пицца 30 см + картофель фри + 2 напитка 0,5 л", "price": 4200, "old": 4900, "weight": "", "img": "", "badge": "Выгодно", "hidden": false},
+    {"id": "c2", "cat": "combo", "name": "Комбо для компании", "desc": "3 пиццы 30 см на выбор + 2 соуса + кола 1 л", "price": 8900, "old": 10300, "weight": "", "img": "", "badge": "Выгодно", "hidden": false},
+    {"id": "s1", "cat": "snacks", "name": "Картофель фри", "desc": "", "price": 900, "old": 0, "weight": "150 г", "img": "", "badge": "", "hidden": false},
+    {"id": "s2", "cat": "snacks", "name": "Наггетсы", "desc": "Куриные, 8 шт", "price": 1400, "old": 0, "weight": "8 шт", "img": "", "badge": "", "hidden": false},
+    {"id": "s3", "cat": "snacks", "name": "Сырные палочки", "desc": "Моцарелла в панировке, 6 шт", "price": 1500, "old": 0, "weight": "6 шт", "img": "", "badge": "", "hidden": false},
+    {"id": "d1", "cat": "drinks", "name": "Кола", "desc": "", "price": 500, "old": 0, "weight": "0,5 л", "img": "", "badge": "", "hidden": false},
+    {"id": "d2", "cat": "drinks", "name": "Кола", "desc": "", "price": 900, "old": 0, "weight": "1 л", "img": "", "badge": "", "hidden": false},
+    {"id": "d3", "cat": "drinks", "name": "Сок", "desc": "Яблоко / апельсин", "price": 800, "old": 0, "weight": "1 л", "img": "", "badge": "", "hidden": false},
+    {"id": "d4", "cat": "drinks", "name": "Вода", "desc": "Без газа", "price": 300, "old": 0, "weight": "0,5 л", "img": "", "badge": "", "hidden": false},
+    {"id": "sc1", "cat": "sauce", "name": "Сырный соус", "desc": "", "price": 250, "old": 0, "weight": "", "img": "", "badge": "", "hidden": false},
+    {"id": "sc2", "cat": "sauce", "name": "Соус барбекю", "desc": "", "price": 250, "old": 0, "weight": "", "img": "", "badge": "", "hidden": false},
+    {"id": "sc3", "cat": "sauce", "name": "Чесночный соус", "desc": "", "price": 250, "old": 0, "weight": "", "img": "", "badge": "", "hidden": false},
+    {"id": "sc4", "cat": "sauce", "name": "Кетчуп", "desc": "", "price": 150, "old": 0, "weight": "", "img": "", "badge": "", "hidden": false}
+  ]
+}

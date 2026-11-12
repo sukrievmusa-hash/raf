@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Пиццерия — заказ онлайн</title>
+<meta name="description" content="Меню пиццерии и заказ с доставкой через WhatsApp">
+<meta name="theme-color" content="#17110d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app"><div class="loading">Загружаем меню…</div></div>
+<script src="common.js"></script>
+<script>
+(function(){
+"use strict";
+var E=PZ.esc,M=PZ.money,I=PZ.ICON;
+var S=null,app=document.getElementById("app");
+var cart={},mode="delivery",form={name:"",phone:"",address:"",comment:""},errs={},sent=false;
+try{var c=JSON.parse(PZ.lsGet("pz-cart",sessionStorage)||"{}");if(c&&typeof c==="object")cart=c;}catch(e){}
+try{var f=JSON.parse(PZ.lsGet("pz-client")||"{}");["name","phone","address"].forEach(function(k){if(f[k])form[k]=f[k];});}catch(e){}
+var th=PZ.lsGet("pz-theme");if(th)document.documentElement.dataset.theme=th;
+
+function items(){return S.items.filter(function(i){return !i.hidden&&+i.price>0;});}
+function byId(id){for(var i=0;i<S.items.length;i++)if(S.items[i].id===id)return S.items[i];return null;}
+function catName(id){for(var i=0;i<S.categories.length;i++)if(S.categories[i].id===id)return S.categories[i].name;return "";}
+function saveCart(){PZ.lsSet("pz-cart",JSON.stringify(cart),sessionStorage);}
+function logo(){var s=S.settings;return s.logo?'<img src="'+E(s.logo)+'" alt="">':'<span>'+E((s.name||"PZ").split(/\s+/).map(function(w){return w[0];}).join("").slice(0,2).toUpperCase())+'</span>';}
+function count(){var n=0;for(var k in cart)n+=cart[k];return n;}
+function subtotal(){var t=0;for(var k in cart){var it=byId(k);if(it&&!it.hidden)t+=it.price*cart[k];}return t;}
+function fee(){var s=S.settings;if(mode==="pickup")return 0;var st=subtotal();if(+s.freeFrom&&st>=+s.freeFrom)return 0;return +s.deliveryFee||0;}
+function clean(){for(var k in cart){var it=byId(k);if(!it||it.hidden||!(cart[k]>0))delete cart[k];}saveCart();}
+function waLink(text){var d=PZ.waDigits(S.settings.whatsapp);return d?"https://wa.me/"+d+(text?"?text="+encodeURIComponent(text):""):"";}
+function toast(msg){var t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},1600);}
+
+function stepper(id,sm){var q=cart[id]||0;
+  if(!q)return '<button class="add" data-add="'+id+'">В корзину</button>';
+  return '<div class="step'+(sm?" sm":"")+'"><button data-dec="'+id+'" aria-label="Убрать">−</button><span>'+q+'</span><button class="plus" data-add="'+id+'" aria-label="Добавить">+</button></div>';}
+function card(it){
+  return '<article class="card"><div class="ph">'+PZ.pic(it)+(it.badge?'<span class="badge">'+E(it.badge)+'</span>':'')+'</div><div class="cb"><div class="nr"><div class="name">'+E(it.name)+'</div><div class="prices"><span class="price">'+M(it.price)+'</span>'+(+it.old>+it.price?'<span class="old">'+M(it.old)+'</span>':'')+'</div></div>'+(it.desc?'<div class="desc">'+E(it.desc)+'</div>':'')+(it.weight?'<span class="pcs">'+E(it.weight)+'</span>':'')+'<div style="display:grid;margin-top:6px" data-slot="'+it.id+'">'+stepper(it.id)+'</div></div></article>';}
+function row(it){
+  return '<div class="row"><div class="th">'+PZ.pic(it)+'</div><div class="mid"><div class="name">'+E(it.name)+(it.badge?'<span class="badge in">'+E(it.badge)+'</span>':'')+'</div>'+(it.desc?'<div class="desc">'+E(it.desc)+'</div>':'')+'<div class="desc">'+(it.weight?E(it.weight)+' · ':'')+'<b style="color:var(--fg)">'+M(it.price)+'</b></div></div><div class="end" data-slot="'+it.id+'">'+stepper(it.id,true)+'</div></div>';}
+function isBig(cat){return /pizza|big|combo/.test(cat)||items().some(function(i){return i.cat===cat&&i.img;});}
+
+function bar(){var n=count();if(!n)return "";
+  return '<div class="bar"><div class="wrap"><button class="in" data-go="cart"><span><small>'+n+' шт · корзина</small><strong>'+M(subtotal())+'</strong></span><span class="cta">Оформить</span></button></div></div>';}
+
+/* ---------- главная ---------- */
+function home(){
+  var s=S.settings,open=PZ.isOpen(s),wa=waLink(),ig=(s.instagram||"").replace(/^@/,"").trim();
+  var pop=items().filter(function(i){return i.badge;}).slice(0,8);if(pop.length<3)pop=items().slice(0,6);
+  var cats=S.categories.filter(function(c){return items().some(function(i){return i.cat===c.id;});});
+  var h='<header class="hero'+(s.hero?' has-img':'')+'"'+(s.hero?' style="--hero:url(\''+E(s.hero)+'\')"':'')+'>'+(s.hero?'':'<div class="hero-pz">'+PZ.art({id:"hero7",name:"Пицца",cat:"pizza"},true)+'</div>')+'<div class="wrap hero-in"><div class="hero-top"><div class="logo">'+logo()+'</div><button class="icon-btn glass" data-theme aria-label="Тема">'+I.moon+'</button></div>'+
+    '<h1>'+E(s.name)+'</h1><p>'+E(s.slogan||"")+'</p><span class="pill"><i class="dot'+(open?'':' closed')+'"></i>'+(open?'Открыто до '+E(s.close):'Сейчас закрыто · откроемся в '+E(s.open))+(s.city?' · '+E(s.city):'')+'</span></div></header>';
+  h+='<main class="wrap" style="padding-bottom:0"><div class="actions"><button class="act primary" data-go="menu"><span class="ic">'+I.pizza+'</span><span class="at"><b>Открыть меню и заказать</b><small>'+items().length+' позиций · доставка и самовывоз</small></span>'+I.arrow+'</button>';
+  if(wa||ig){h+='<div class="act-row">';
+    if(wa)h+='<a class="act sm wa" href="'+wa+'" target="_blank" rel="noopener"><span class="ic">'+I.wa+'</span><span class="at"><b>WhatsApp</b><small>'+E(s.whatsapp)+'</small></span></a>';
+    if(ig)h+='<a class="act sm" href="https://instagram.com/'+encodeURIComponent(ig)+'" target="_blank" rel="noopener"><span class="ic">'+I.ig+'</span><span class="at"><b>Instagram</b><small>@'+E(ig)+'</small></span></a>';
+    h+='</div>';}
+  h+='</div><div class="facts"><div class="fact">'+I.truck+'<b>'+(+s.deliveryFee?M(s.deliveryFee):'Бесплатно')+'</b><span>доставка</span></div><div class="fact">'+I.gift+'<b>'+(+s.freeFrom?'от '+M(s.freeFrom):'—')+'</b><span>бесплатная доставка</span></div><div class="fact">'+I.clock+'<b>'+E(s.open)+'–'+E(s.close)+'</b><span>часы работы</span></div></div>';
+  if(pop.length)h+='<h2 class="sec-h">Популярное</h2><div class="pop-row">'+pop.map(card).join("")+'</div>';
+  h+='<h2 class="sec-h">Категории</h2><div class="cg">'+cats.map(function(c){var f=items().filter(function(i){return i.cat===c.id;});return '<button data-cat="'+E(c.id)+'"><span class="th">'+PZ.pic(f[0])+'</span><span><b>'+E(c.name)+'</b><small>'+f.length+' поз.</small></span></button>';}).join("")+'</div>';
+  if(s.notice)h+='<div class="notice">'+E(s.notice)+'</div>';
+  h+='</main>'+foot()+bar();
+  return h;}
+function foot(){var s=S.settings;return '<footer class="wrap"><b>'+E(s.name)+'</b>'+(s.city||s.address?'<span>'+E([s.city,s.address].filter(Boolean).join(", "))+'</span>':'')+'<span>Ежедневно '+E(s.open)+'–'+E(s.close)+'</span>'+(s.whatsapp?'<span>Тел.: <a href="tel:+'+PZ.waDigits(s.whatsapp)+'">'+E(s.whatsapp)+'</a></span>':'')+'</footer>';}
+
+/* ---------- меню ---------- */
+function menu(){
+  var s=S.settings,cats=S.categories.filter(function(c){return items().some(function(i){return i.cat===c.id;});});
+  var h='<div class="top"><div class="wrap"><div class="head"><button class="icon-btn" data-go="home" aria-label="Назад">'+I.back+'</button><div class="t"><h2>Меню</h2><p>'+E(s.name)+(s.city?' · '+E(s.city):'')+'</p></div><button class="icon-btn" data-go="cart" aria-label="Корзина">'+I.bag+'</button></div><nav class="chips">'+cats.map(function(c,i){return '<button class="chip'+(i?'':' on')+'" data-jump="'+E(c.id)+'">'+E(c.name)+'</button>';}).join("")+'</nav></div></div><main class="wrap">';
+  if(!PZ.isOpen(s))h+='<div class="notice">Сейчас мы закрыты — заказ можно оформить, мы ответим, как откроемся ('+E(s.open)+').</div>';
+  cats.forEach(function(c){var list=items().filter(function(i){return i.cat===c.id;}),big=isBig(c.id);
+    h+='<section class="sec" id="c-'+E(c.id)+'"><h3>'+E(c.name)+'</h3><div class="grid">'+list.map(big?card:row).join("")+'</div></section>';});
+  h+='</main>'+foot()+bar();return h;}
+
+/* ---------- корзина ---------- */
+function field(k,label,type,ph,area){return '<div class="f'+(errs[k]?' err':'')+'"><label for="f-'+k+'">'+label+'</label>'+(area?'<textarea id="f-'+k+'" data-f="'+k+'" placeholder="'+ph+'">'+E(form[k])+'</textarea>':'<input id="f-'+k+'" data-f="'+k+'" type="'+type+'" placeholder="'+ph+'" value="'+E(form[k])+'"'+(type==="tel"?' inputmode="tel" autocomplete="tel"':'')+'>')+(errs[k]?'<div class="e">'+errs[k]+'</div>':'')+'</div>';}
+function cartView(){
+  clean();var s=S.settings;
+  var top='<div class="top"><div class="wrap"><div class="head" style="padding-bottom:12px"><button class="icon-btn" data-go="menu" aria-label="Назад">'+I.back+'</button><div class="t"><h2>Корзина</h2><p>'+E(s.name)+'</p></div></div></div></div>';
+  if(sent)return top+'<main class="wrap"><div class="empty-cart"><h2>Заказ отправлен 👍</h2><p class="hint">Мы получили его в WhatsApp и скоро подтвердим.<br>Если WhatsApp не открылся — нажмите кнопку ниже.</p><a class="wa" style="max-width:320px" href="'+E(lastLink)+'" target="_blank" rel="noopener">'+I.wa+'Открыть WhatsApp ещё раз</a><button class="ghost" data-new>Новый заказ</button></div></main>';
+  if(!count())return top+'<main class="wrap"><div class="empty-cart"><h2>Корзина пуста</h2><p class="hint">Добавьте что-нибудь вкусное из меню</p><button class="btn" data-go="menu">Перейти в меню</button></div></main>';
+  if(!s.pickup)mode="delivery";
+  var st=subtotal(),fe=fee(),tot=st+fe,min=+s.minOrder||0,free=+s.freeFrom||0;
+  var h=top+'<main class="wrap cartv"><div class="box">';
+  for(var k in cart){var it=byId(k);h+='<div class="line"><div class="lt">'+PZ.pic(it)+'</div><div class="t"><div>'+E(it.name)+(it.weight?' · '+E(it.weight):'')+'</div><div>'+M(it.price)+' × '+cart[k]+' = '+M(it.price*cart[k])+'</div></div><div data-slot="'+k+'">'+stepper(k,true)+'</div></div>';}
+  h+='</div>';
+  if(mode==="delivery"&&free&&+s.deliveryFee){var p=Math.min(100,st/free*100);h+='<div class="progress'+(st>=free?' ok':'')+'"><div>'+(st>=free?'🎉 Доставка бесплатная':'До бесплатной доставки: <b>'+M(free-st)+'</b>')+'</div><div class="pb"><i style="width:'+p.toFixed(0)+'%"></i></div></div>';}
+  h+='<div class="box"><h3>Ваши данные</h3>';
+  if(s.pickup)h+='<div class="seg"><button data-mode="delivery" class="'+(mode==="delivery"?"on":"")+'">Доставка</button><button data-mode="pickup" class="'+(mode==="pickup"?"on":"")+'">Самовывоз</button></div>';
+  h+=field("name","Имя","text","Как к вам обращаться")+field("phone","Телефон","tel","+7 7__ ___ __ __");
+  if(mode==="delivery")h+=field("address","Адрес доставки","text","Улица, дом, квартира, подъезд");
+  else if(s.address)h+='<p class="hint">Самовывоз: '+E(s.address)+'</p>';
+  h+=field("comment","Комментарий (необязательно)","","Например: без лука, сдача с 10 000",true)+'</div>';
+  h+='<div class="box sum"><div><span>Товары</span><span>'+M(st)+'</span></div>'+(mode==="delivery"?'<div><span>Доставка</span><span>'+(fe?M(fe):'бесплатно')+'</span></div>':'')+'<div class="total"><span>Итого</span><span>'+M(tot)+'</span></div></div>';
+  var bad=min&&st<min;
+  if(bad)h+='<p class="warn">Минимальная сумма заказа — '+M(min)+'. Добавьте ещё на '+M(min-st)+'.</p>';
+  h+='<button class="wa" data-send'+(bad?' aria-disabled="true"':'')+'>'+I.wa+'Отправить заказ в WhatsApp</button><p class="hint" style="text-align:center">Оплата при получении: наличными или Kaspi. Заказ подтверждается в WhatsApp.</p></main>';
+  return h;}
+
+var lastLink="";
+function orderText(){
+  var s=S.settings,lines=["Новый заказ — "+s.name,""];var n=1;
+  for(var k in cart){var it=byId(k);lines.push((n++)+". "+it.name+(it.weight?" ("+it.weight+")":"")+" × "+cart[k]+" = "+M(it.price*cart[k]));}
+  lines.push("","Товары: "+M(subtotal()));
+  if(mode==="delivery")lines.push("Доставка: "+(fee()?M(fee()):"бесплатно"));
+  lines.push("Итого: "+M(subtotal()+fee()),"");
+  lines.push("Способ: "+(mode==="delivery"?"Доставка":"Самовывоз"),"Имя: "+form.name.trim(),"Телефон: "+form.phone.trim());
+  if(mode==="delivery")lines.push("Адрес: "+form.address.trim());
+  if(form.comment.trim())lines.push("Комментарий: "+form.comment.trim());
+  return lines.join("\n");}
+function send(){
+  var s=S.settings;errs={};
+  if(+s.minOrder&&subtotal()<+s.minOrder){toast("Сумма меньше минимальной");return;}
+  if(!form.name.trim())errs.name="Укажите имя";
+  if(form.phone.replace(/\D/g,"").length<10)errs.phone="Проверьте номер телефона";
+  if(mode==="delivery"&&form.address.trim().length<5)errs.address="Укажите адрес";
+  if(Object.keys(errs).length){render();var el=document.querySelector(".f.err input,.f.err textarea");if(el)el.focus();return;}
+  var link=waLink(orderText());if(!link){toast("Номер WhatsApp не указан в настройках");return;}
+  PZ.lsSet("pz-client",JSON.stringify({name:form.name,phone:form.phone,address:form.address}));
+  lastLink=link;window.open(link,"_blank");
+  cart={};saveCart();sent=true;form.comment="";render();}
+
+/* ---------- роутинг ---------- */
+function view(){var h=location.hash.replace("#","");return h==="menu"||h==="cart"?h:"home";}
+function render(){var v=view();app.innerHTML=v==="menu"?menu():v==="cart"?cartView():home();
+  document.title=S.settings.name+(v==="menu"?" — меню":v==="cart"?" — корзина":" — заказ онлайн");}
+function go(v,cat){if(v!=="cart")sent=false;var cur=view();location.hash=v==="home"?"":v;if(cur===v)render();window.scrollTo(0,0);
+  if(cat)setTimeout(function(){var el=document.getElementById("c-"+cat);if(el)el.scrollIntoView();},30);}
+window.addEventListener("hashchange",function(){render();window.scrollTo(0,0);});
+
+function refreshSlot(id){
+  var v=view();if(v==="cart"){render();return;}
+  document.querySelectorAll('[data-slot="'+id+'"]').forEach(function(el){el.innerHTML=stepper(id,el.classList.contains("end"));});
+  var b=document.querySelector(".bar"),nb=bar();if(b){if(nb)b.outerHTML=nb;else b.remove();}else if(nb)app.insertAdjacentHTML("beforeend",nb);}
+
+app.addEventListener("click",function(e){
+  var t=e.target.closest("button,a");if(!t)return;var d=t.dataset;
+  if(d.add){cart[d.add]=(cart[d.add]||0)+1;saveCart();refreshSlot(d.add);if(cart[d.add]===1&&view()!=="cart")toast("Добавлено в корзину");}
+  else if(d.dec){cart[d.dec]=(cart[d.dec]||0)-1;if(cart[d.dec]<=0)delete cart[d.dec];saveCart();refreshSlot(d.dec);}
+  else if(d.go)go(d.go);
+  else if(d.cat)go("menu",d.cat);
+  else if(d.jump){document.querySelectorAll(".chip").forEach(function(c){c.classList.toggle("on",c===t);});var el=document.getElementById("c-"+d.jump);if(el)el.scrollIntoView({behavior:"smooth"});}
+  else if(d.mode){mode=d.mode;render();}
+  else if("send" in d)send();
+  else if("new" in d){sent=false;go("menu");}
+  else if("theme" in d){var r=document.documentElement,n=r.dataset.theme==="light"?"dark":"light";r.dataset.theme=n;PZ.lsSet("pz-theme",n);}
+});
+app.addEventListener("input",function(e){var k=e.target.dataset.f;if(k){form[k]=e.target.value;if(errs[k]){delete errs[k];var w=e.target.closest(".f");w.classList.remove("err");var m=w.querySelector(".e");if(m)m.remove();}}});
+
+PZ.loadMenu().then(function(d){S=d;render();}).catch(function(){app.innerHTML='<div class="loading">Не удалось загрузить меню. Обновите страницу.</div>';});
+})();
+</script>
+</body>
+</html>
