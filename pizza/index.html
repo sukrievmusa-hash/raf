@@ -74,7 +74,11 @@ function isOpen(){
 function openLabel(){var o=isOpen();return '<span class="dot'+(o===false?' closed':'')+'"></span>'+(o===false?'Сейчас закрыто':'Сейчас открыто')+(S.settings.open?' · '+esc(S.settings.open)+'–'+esc(S.settings.close):'');}
 function cartList(){var out=[];S.items.forEach(function(it){if(!it.hidden&&cart[it.id]>0)out.push({it:it,q:cart[it.id]});});return out;}
 function cartSum(){return cartList().reduce(function(s,l){return s+l.it.price*l.q;},0);}
-function cartCount(){return cartList().reduce(function(s,l){return s+l.q;},0);}
+function stickItem(){for(var i=0;i<S.items.length;i++){var it=S.items[i];if(!it.hidden&&/^палочк/i.test(it.name))return it;}return null;}
+function isStick(it){var s=stickItem();return !!s&&s.id===it.id;}
+function cartLines(){return cartList().filter(function(l){return !isStick(l.it);});}
+function cartCount(){return cartLines().reduce(function(s,l){return s+l.q;},0);}
+function sticksHTML(){var it=stickItem();if(!it)return "";return '<div class="sticks"><span class="st-ic">🥢</span><span class="st-t"><b>'+esc(it.name)+'</b><small>'+esc(it.desc||"Сколько положить?")+'</small></span>'+stepper(it,true)+'</div>';}
 function fee(){if(mode!=="delivery"||!cartSum())return 0;var st=S.settings;if(+st.freeFrom&&cartSum()>=+st.freeFrom)return 0;return +st.deliveryFee||0;}
 function stepper(it,small){var q=cart[it.id]||0;return '<div class="step'+(small?' sm':'')+'"><button data-act="dec" data-id="'+it.id+'" aria-label="Убрать">−</button><span class="num" data-q="'+it.id+'">'+q+'</span><button class="plus" data-act="inc" data-id="'+it.id+'" aria-label="Добавить '+esc(it.name)+'">+</button></div>';}
 function priceHTML(it){return '<div class="prices">'+(+it.old>+it.price?'<span class="old num">'+money(it.old)+'</span>':'')+'<span class="price num">'+money(it.price)+'</span></div>';}
@@ -115,7 +119,7 @@ function renderHome(){
     h+='<section class="wrap pop"><div class="pop-h"><h2>'+esc(catName(popular[0].cat))+'</h2><button class="link" data-act="go" data-v="menu">Всё меню</button></div><div class="pop-row">'+
       popular.map(function(it){return '<article class="pop-card"><div class="ph"><img src="'+esc(it.img)+'" alt="'+esc(it.name)+'" loading="lazy">'+(it.badge?'<span class="badge">'+esc(it.badge)+'</span>':'')+'</div><div class="pc-b"><div class="nr"><div class="name">'+esc(it.name)+'</div>'+(it.weight?'<span class="pcs">'+esc(it.weight)+'</span>':'')+'</div><div class="nr">'+priceHTML(it)+stepper(it,true)+'</div></div></article>';}).join("")+'</div></section>';
   }
-  h+='<div class="wrap cats-grid"><h2>Меню</h2><div class="cg">'+S.categories.filter(function(c){return S.items.some(function(i){return i.cat===c.id&&!i.hidden;});}).map(function(c){var it=S.items.filter(function(i){return i.cat===c.id&&!i.hidden;});var withImg=it.filter(function(i){return i.img;})[0];return '<button class="cg-i" data-act="cat" data-id="'+c.id+'"><span class="cg-th">'+(withImg?'<img src="'+esc(withImg.img)+'" alt="" loading="lazy">':art(it[0]))+'</span><span class="cg-t"><b>'+esc(c.name)+'</b><small>'+it.length+' поз.</small></span></button>';}).join("")+'</div></div>';
+  h+='<div class="wrap cats-grid"><h2>Меню</h2><div class="cg">'+S.categories.filter(function(c){return S.items.some(function(i){return i.cat===c.id&&!i.hidden&&!isStick(i);});}).map(function(c){var it=S.items.filter(function(i){return i.cat===c.id&&!i.hidden&&!isStick(i);});var withImg=it.filter(function(i){return i.img;})[0];return '<button class="cg-i" data-act="cat" data-id="'+c.id+'"><span class="cg-th">'+(withImg?'<img src="'+esc(withImg.img)+'" alt="" loading="lazy">':art(it[0]))+'</span><span class="cg-t"><b>'+esc(c.name)+'</b><small>'+it.length+' поз.</small></span></button>';}).join("")+'</div></div>';
   if(st.notice)h+='<div class="wrap"><p class="hint" style="margin-top:18px">'+esc(st.notice)+'</p></div>';
   h+=footer()+'</div>'+barHTML()+'<div id="toast"></div>';
   app.innerHTML=h;
@@ -127,10 +131,10 @@ function cardHTML(it){
 }
 var pendingCat=null;
 function renderMenu(){
-  var cats=S.categories.filter(function(c){return S.items.some(function(i){return i.cat===c.id&&!i.hidden;});});
+  var cats=S.categories.filter(function(c){return S.items.some(function(i){return i.cat===c.id&&!i.hidden&&!isStick(i);});});
   var h=topbar(null,"home")+'<nav class="chips" aria-label="Разделы меню">'+cats.map(function(c,i){return '<button class="chip'+(i===0?' on':'')+'" data-act="jump" data-id="'+c.id+'">'+esc(c.name)+'</button>';}).join("")+'</nav></div></header>';
-  h+='<main class="wrap"><div class="status">'+openLabel()+'</div>';
-  cats.forEach(function(c){h+='<section class="sec" id="s-'+c.id+'" data-cat="'+c.id+'"><h2>'+esc(c.name)+'</h2><div class="grid">'+S.items.filter(function(i){return i.cat===c.id&&!i.hidden;}).map(cardHTML).join("")+'</div></section>';});
+  h+='<main class="wrap"><div class="status">'+openLabel()+'</div>'+sticksHTML();
+  cats.forEach(function(c){h+='<section class="sec" id="s-'+c.id+'" data-cat="'+c.id+'"><h2>'+esc(c.name)+'</h2><div class="grid">'+S.items.filter(function(i){return i.cat===c.id&&!i.hidden&&!isStick(i);}).map(cardHTML).join("")+'</div></section>';});
   h+='</main>'+footer()+barHTML()+'<div id="toast"></div>';
   app.innerHTML=h;spy();
   if(pendingCat){var s=document.getElementById("s-"+pendingCat);pendingCat=null;if(s)setTimeout(function(){s.scrollIntoView();},0);}
@@ -148,11 +152,11 @@ function orderText(){
 function formErrs(){var e={};if(!form.name.trim())e.name=1;if(form.phone.replace(/\D/g,"").length<10)e.phone=1;if(mode==="delivery"&&!form.address.trim())e.address=1;return e;}
 function blockReason(){var min=+S.settings.minOrder||0;if(!cartCount())return "Корзина пуста.";if(!digits())return "Номер WhatsApp для заказов пока не указан.";if(min&&cartSum()<min)return "Минимальная сумма заказа — "+money(min)+".";return "";}
 function renderCart(){
-  var st=S.settings,L=cartList(),sum=cartSum(),f=fee();
+  var st=S.settings,L=cartLines(),sum=cartSum(),f=fee();
   var foc=document.activeElement&&document.activeElement.id;
   var h=topbar("Корзина","menu")+'</div></header><main class="wrap cartv">';
   if(!L.length){h+='<div class="empty-cart"><div class="logo xl">'+logoHTML()+'</div><h2>Корзина пуста</h2><p class="hint">Добавьте блюда из меню кнопкой «+»</p><button class="pub" data-act="go" data-v="menu">Перейти в меню</button></div></main>';app.innerHTML=h+'<div id="toast"></div>';return;}
-  h+='<section class="box"><div class="lines">'+L.map(function(l){return '<div class="line"><div class="lt">'+(l.it.img?'<img src="'+esc(l.it.img)+'" alt="">':art(l.it))+'</div><div class="t"><div>'+esc(l.it.name)+'</div><div class="num">'+money(l.it.price)+' × '+l.q+' = <b>'+money(l.it.price*l.q)+'</b></div></div>'+stepper(l.it,true)+'</div>';}).join("")+'</div><button class="link" data-act="go" data-v="menu">+ Добавить ещё</button></section>';
+  h+='<section class="box"><div class="lines">'+L.map(function(l){return '<div class="line"><div class="lt">'+(l.it.img?'<img src="'+esc(l.it.img)+'" alt="">':art(l.it))+'</div><div class="t"><div>'+esc(l.it.name)+'</div><div class="num">'+money(l.it.price)+' × '+l.q+' = <b>'+money(l.it.price*l.q)+'</b></div></div>'+stepper(l.it,true)+'</div>';}).join("")+'</div><button class="link" data-act="go" data-v="menu">+ Добавить ещё</button></section>'+sticksHTML();
   if(mode==="delivery"&&f&&+st.freeFrom)h+='<div class="progress"><div class="pt">До бесплатной доставки осталось <b class="num">'+money(+st.freeFrom-sum)+'</b></div><div class="pb"><i style="width:'+Math.min(100,Math.round(sum/(+st.freeFrom)*100))+'%"></i></div></div>';
   else if(mode==="delivery"&&+st.freeFrom&&sum>=+st.freeFrom)h+='<div class="progress ok"><div class="pt">Доставка бесплатная</div><div class="pb"><i style="width:100%"></i></div></div>';
   h+='<section class="box fields"><h3>Получатель</h3>';
@@ -188,7 +192,7 @@ document.addEventListener("click",function(ev){
   var t=ev.target.closest("[data-act]");if(!t)return;
   var a=t.dataset.act,id=t.dataset.id;
   if(a==="inc"){cart[id]=(cart[id]||0)+1;saveCart();refreshQty(id);if(cart[id]===1&&view!=="cart")toast("Добавлено: "+itemById(id).name);}
-  else if(a==="dec"){if(cart[id]){cart[id]--;if(!cart[id])delete cart[id];saveCart();refreshQty(id);}}
+  else if(a==="dec"){if(cart[id]){cart[id]--;if(!cart[id])delete cart[id];var sk=stickItem();if(sk&&!cartCount()&&cart[sk.id])delete cart[sk.id];saveCart();refreshQty(id);if(sk)refreshQty(sk.id);}}
   else if(a==="go")go(t.dataset.v);
   else if(a==="cat"){pendingCat=id;go("menu");}
   else if(a==="jump"){var s=document.getElementById("s-"+id);if(s)s.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});}
