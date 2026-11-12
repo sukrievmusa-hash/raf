@@ -665,7 +665,7 @@
       "weight": "1 шт",
       "img": "",
       "badge": "",
-      "hidden": false
+      "hidden": true
     },
     {
       "id": "i52",
@@ -677,7 +677,7 @@
       "weight": "1 шт",
       "img": "",
       "badge": "",
-      "hidden": false
+      "hidden": true
     },
     {
       "id": "i53",
@@ -689,7 +689,7 @@
       "weight": "1 шт",
       "img": "",
       "badge": "",
-      "hidden": false
+      "hidden": true
     },
     {
       "id": "i54",
@@ -701,7 +701,7 @@
       "weight": "1 шт",
       "img": "",
       "badge": "",
-      "hidden": false
+      "hidden": true
     },
     {
       "id": "i55",
