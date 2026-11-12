@@ -7,7 +7,7 @@
     "whatsapp": "+7 776 725 5333",
     "instagram": "rollmi.kz",
     "open": "11:00",
-    "close": "01:00",
+    "close": "00:00",
     "deliveryFee": 700,
     "freeFrom": 10000,
     "minOrder": 0,
@@ -298,14 +298,14 @@
     {
       "id": "i21",
       "cat": "big",
-      "name": "Драко",
+      "name": "Дракон ",
       "desc": "Рис, нори, угорь, краб, огурец, авокадо",
-      "price": 0,
-      "old": 0,
+      "price": 3200,
+      "old": 3600,
       "weight": "",
       "img": "",
       "badge": "",
-      "hidden": true
+      "hidden": false
     },
     {
       "id": "i22",
