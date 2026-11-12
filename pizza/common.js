@@ -11,27 +11,18 @@ var PZ = (function(){
 
   function hash(s){var h=0;s=String(s||"");for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;}
 
-  /* Рисованные иллюстрации, если у позиции нет фото */
-  function art(it,noBg){
-    var n=(it.name||"").toLowerCase(), h=hash(it.id), cat=it.cat||"";
-    var bg=noBg?'':'<rect width="160" height="100" fill="#2c1a10"/><circle cx="20" cy="18" r="40" fill="#3a2215"/><circle cx="150" cy="95" r="45" fill="#3a2215"/>';
-    if(/напит|кола|сок|вода/.test(n)||cat==="drinks"){
-      var col=/сок/.test(n)?"#f39a2b":/вода/.test(n)?"#8fd3f0":"#4a1d10";
-      return '<svg viewBox="0 0 160 100" aria-hidden="true">'+bg+'<rect x="66" y="22" width="28" height="64" rx="8" fill="'+col+'" stroke="#fff3" stroke-width="2"/><rect x="72" y="12" width="16" height="12" rx="3" fill="#e8492c"/><rect x="66" y="44" width="28" height="16" fill="#e8492c"/></svg>';
-    }
-    if(/соус|кетчуп/.test(n)||cat==="sauce"){
-      var sc=/сыр/.test(n)?"#f2c94c":/барбекю/.test(n)?"#6b2a12":/чеснок/.test(n)?"#f4ecd8":"#c3242b";
-      return '<svg viewBox="0 0 160 100" aria-hidden="true">'+bg+'<ellipse cx="80" cy="58" rx="34" ry="22" fill="#eee4d6"/><ellipse cx="80" cy="54" rx="26" ry="14" fill="'+sc+'"/></svg>';
-    }
-    if(/фри/.test(n))return '<svg viewBox="0 0 160 100" aria-hidden="true">'+bg+'<g fill="#f6c445">'+[52,62,72,82,92,102].map(function(x,i){return '<rect x="'+x+'" y="'+(18+(i%3)*6)+'" width="7" height="44" rx="2" transform="rotate('+((i-2.5)*5)+' '+x+' 60)"/>';}).join("")+'</g><path d="M50 50h60l-8 40H58z" fill="#e8492c"/></svg>';
-    if(/наггет|палоч/.test(n))return '<svg viewBox="0 0 160 100" aria-hidden="true">'+bg+'<g fill="#d9902f" stroke="#a86318" stroke-width="2"><ellipse cx="62" cy="52" rx="16" ry="11"/><ellipse cx="96" cy="48" rx="16" ry="11"/><ellipse cx="80" cy="68" rx="16" ry="11"/></g></svg>';
-    // пицца
-    var top=[["#c8331f","#8b1a0e"],["#5a3b22","#3d2615"],["#f0d07a","#e8b04a"],["#2f6b2a","#d63a2a"],["#8b4a2b","#c8331f"]][h%5];
-    var dots="";for(var i=0;i<9;i++){var a=(h%360+i*40)*Math.PI/180,r=12+((h>>i)%3)*8;dots+='<circle cx="'+(80+Math.cos(a)*r).toFixed(1)+'" cy="'+(52+Math.sin(a)*r*.8).toFixed(1)+'" r="'+(i%2?4:5.5)+'" fill="'+top[i%2]+'"/>';}
-    var combo=/комбо/.test(n)||cat==="combo";
-    var pizza='<ellipse cx="80" cy="54" rx="44" ry="38" fill="#d99a4a"/><ellipse cx="80" cy="53" rx="37" ry="31" fill="#f3cf6e"/><path d="M50 45q10 8 20 0t20 2 18-3" stroke="#fff5" stroke-width="3" fill="none"/>'+dots;
-    if(combo)return '<svg viewBox="0 0 160 100" aria-hidden="true">'+bg+'<g transform="translate(-22 0)">'+pizza+'</g><rect x="112" y="30" width="20" height="50" rx="6" fill="#4a1d10" stroke="#fff3" stroke-width="2"/><rect x="112" y="46" width="20" height="12" fill="#e8492c"/><g fill="#f6c445"><rect x="136" y="40" width="5" height="34" rx="2"/><rect x="143" y="36" width="5" height="38" rx="2"/></g></svg>';
-    return '<svg viewBox="0 0 160 100" aria-hidden="true">'+bg+pizza+'</svg>';
+  /* Рисованные иллюстрации (как на основном сайте), если у позиции нет фото */
+  var cats=[];
+  function setCats(c){cats=c||[];}
+  function catName(id){for(var i=0;i<cats.length;i++)if(cats[i].id===id)return cats[i].name;return "";}
+  function art(it){
+    var n=(it.name+" "+catName(it.cat)).toLowerCase(),h=0;for(var i=0;i<it.id.length;i++)h=(h*31+it.id.charCodeAt(i))>>>0;
+    if(/пицц/.test(n))return '<svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="22" fill="#e9b25a"/><circle cx="30" cy="30" r="18" fill="#f3d27a"/><circle cx="24" cy="24" r="3.5" fill="#d94b33"/><circle cx="36" cy="27" r="3.5" fill="#d94b33"/><circle cx="28" cy="37" r="3.5" fill="#d94b33"/><circle cx="38" cy="38" r="2" fill="#3b4d2a"/><circle cx="21" cy="33" r="2" fill="#3b4d2a"/></svg>';
+    if(/соус|имбир|васаби/.test(n)){var col=/имбир/.test(n)?"#f4c9a0":/васаби/.test(n)?"#93c255":/сырн/.test(n)?"#f1e2b8":/остр/.test(n)?"#c3242b":"#2b1b14";return '<svg viewBox="0 0 60 60" aria-hidden="true"><ellipse cx="30" cy="32" rx="19" ry="14" fill="#1b1f27"/><ellipse cx="30" cy="30" rx="14" ry="9" fill="'+col+'"/></svg>';}
+    var F=[["#ff8a5c","#ffd6c2"],["#ea4429","#ffc9bd"],["#f2b84b","#fff0c7"],["#7cc36a","#e3f4d6"]],c=F[h%F.length];
+    if(/гункан/.test(n))return '<svg viewBox="0 0 60 60" aria-hidden="true"><rect x="16" y="24" width="28" height="22" rx="6" fill="#13241b"/><ellipse cx="30" cy="24" rx="14" ry="6" fill="#f4efe3"/><ellipse cx="30" cy="20" rx="11" ry="6" fill="'+c[0]+'"/></svg>';
+    if(it.cat==="sushi")return '<svg viewBox="0 0 60 60" aria-hidden="true"><rect x="12" y="30" width="36" height="14" rx="7" fill="#f4efe3"/><path d="M10 31c4-10 36-12 40 0-8 3-32 3-40 0z" fill="'+c[0]+'"/></svg>';
+    return '<svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="20" fill="#13241b"/><circle cx="30" cy="30" r="16.5" fill="#f4efe3"/><circle cx="30" cy="30" r="8" fill="'+c[0]+'"/><circle cx="27.5" cy="28" r="3" fill="'+c[1]+'"/></svg>';
   }
   var prev={};
   function src(p){return prev[p]||p;}
@@ -65,5 +56,5 @@ var PZ = (function(){
     return fetch("menu.json?t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("menu "+r.status);return r.json();});
   }
 
-  return {prev:prev,src:src,REPO:REPO,esc:esc,money:money,lsGet:lsGet,lsSet:lsSet,lsDel:lsDel,art:art,pic:pic,ICON:ICON,isOpen:isOpen,waDigits:waDigits,loadMenu:loadMenu,hash:hash};
+  return {setCats:setCats,prev:prev,src:src,REPO:REPO,esc:esc,money:money,lsGet:lsGet,lsSet:lsSet,lsDel:lsDel,art:art,pic:pic,ICON:ICON,isOpen:isOpen,waDigits:waDigits,loadMenu:loadMenu,hash:hash};
 })();

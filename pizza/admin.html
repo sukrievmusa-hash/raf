@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Админка пиццерии</title>
+<title>Rollmi — управление меню</title>
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#17110d">
+<meta name="theme-color" content="#0a1428">
+<link rel="icon" href="img/logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="rollmi.css">
 </head>
 <body>
 <div id="app"><div class="loading">Загрузка…</div></div>
@@ -21,7 +22,7 @@ var E=PZ.esc,M=PZ.money,R=PZ.REPO,app=document.getElementById("app");
 var API="https://api.github.com/repos/"+R.owner+"/"+R.repo+"/contents/";
 var token=PZ.lsGet("pz-admin-token")||"";
 var D=null,sha=null,saved="",tab="items",q="",fcat="",sheet=null,busy=false,armed=null;
-var th=PZ.lsGet("pz-theme");if(th)document.documentElement.dataset.theme=th;
+var th=PZ.lsGet("rollmi-theme");if(th)document.documentElement.dataset.theme=th;
 
 /* ---------- GitHub ---------- */
 function gh(path,opt){opt=opt||{};opt.headers=Object.assign({"Accept":"application/vnd.github+json","Authorization":"Bearer "+token},opt.headers||{});
@@ -55,7 +56,7 @@ window.addEventListener("beforeunload",function(e){if(dirty()){e.preventDefault(
 
 /* ---------- вход ---------- */
 function login(err){
-  app.innerHTML='<div class="login"><form id="lf"><div class="logo" style="width:60px;height:60px">🍕</div><h1>Вход для владельца</h1><p class="hint" style="margin:0">Здесь меняется меню, цены и описание. Изменения сразу появляются на сайте.</p><div class="f"><label for="tk">Ключ доступа</label><input id="tk" type="password" autocomplete="current-password" placeholder="github_pat_…" required></div>'+(err?'<div class="err-msg">'+E(err)+'</div>':'')+'<button class="btn" type="submit">Войти</button>'+
+  app.innerHTML='<div class="login"><form id="lf"><div class="logo" style="width:64px;height:64px"><img src="img/logo.jpg" alt=""></div><h1>Вход для владельца</h1><p class="hint" style="margin:0">Здесь меняется меню, цены и описание. Изменения сразу появляются на сайте.</p><div class="f"><label for="tk">Ключ доступа</label><input id="tk" type="password" autocomplete="current-password" placeholder="github_pat_…" required></div>'+(err?'<div class="err-msg">'+E(err)+'</div>':'')+'<button class="btn" type="submit">Войти</button>'+
   '<details class="help"><summary>Где взять ключ?</summary><ol><li>Войдите на github.com в аккаунт, где лежит сайт.</li><li>Откройте: Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token.</li><li>Repository access: <b>Only select repositories</b> → <b>'+E(R.repo)+'</b>.</li><li>Permissions → Repository → <b>Contents: Read and write</b>.</li><li>Скопируйте ключ и вставьте сюда. На этом устройстве он запомнится.</li></ol></details>'+
   '<a class="hint" href="./" style="text-align:center">← Вернуться на сайт</a></form></div>';
   document.getElementById("lf").onsubmit=function(e){e.preventDefault();token=document.getElementById("tk").value.trim();start(true);};}
@@ -73,7 +74,7 @@ function start(fresh){
 
 /* ---------- экраны ---------- */
 function top(){
-  return '<div class="adm-top"><div class="wrap"><div class="logo" style="width:40px;height:40px">'+(D.settings.logo?'<img src="'+E(PZ.src(D.settings.logo))+'" alt="">':'🍕')+'</div><h2>Управление</h2><a class="ghost" href="./" target="_blank" rel="noopener">Сайт ↗</a><button class="btn" data-pub'+(dirty()&&!busy?'':' disabled')+'>'+(busy?'Сохраняем…':dirty()?'Опубликовать':'Сохранено ✓')+'</button></div><div class="wrap"><div class="tabs">'+
+  return '<div class="adm-top"><div class="wrap"><div class="logo" style="width:40px;height:40px">'+(D.settings.logo?'<img src="'+E(PZ.src(D.settings.logo))+'" alt="">':'<span>R</span>')+'</div><h2>'+E(D.settings.name)+' — меню</h2><a class="ghost" href="./" target="_blank" rel="noopener">Сайт ↗</a><button class="btn" data-pub'+(dirty()&&!busy?'':' disabled')+'>'+(busy?'Сохраняем…':dirty()?'Опубликовать':'Сохранено ✓')+'</button></div><div class="wrap"><div class="tabs">'+
     [["items","Позиции ("+D.items.length+")"],["cats","Категории"],["settings","Настройки"]].map(function(t){return '<button data-tab="'+t[0]+'" class="'+(tab===t[0]?"on":"")+'">'+t[1]+'</button>';}).join("")+'</div></div></div>';}
 function itemsTab(){
   var h='<div class="panel"><div style="display:flex;gap:8px;flex-wrap:wrap"><input class="search" data-q placeholder="Поиск по названию…" value="'+E(q)+'"><select class="search" style="flex:0 1 200px" data-fcat><option value="">Все категории</option>'+D.categories.map(function(c){return '<option value="'+E(c.id)+'"'+(fcat===c.id?' selected':'')+'>'+E(c.name)+'</option>';}).join("")+'</select><button class="btn" data-new>+ Добавить блюдо</button></div></div>';
@@ -93,25 +94,25 @@ function catsTab(){
 function sf(k,label,type,ph){var v=D.settings[k];return '<div class="f"><label>'+label+'</label><input data-s="'+k+'" type="'+(type||"text")+'" value="'+E(v==null?"":v)+'" placeholder="'+E(ph||"")+'"'+(type==="number"?' inputmode="numeric" min="0"':'')+'></div>';}
 function photoField(k,label){var v=D.settings[k];return '<div class="f"><label>'+label+'</label><div class="photo"><div class="th" style="'+(k==="logo"?'width:75px;border-radius:50%':'')+'">'+(v?'<img src="'+E(PZ.src(v))+'" alt="">':'<div class="hint" style="display:grid;place-items:center;height:100%">нет</div>')+'</div><label class="ghost" style="cursor:pointer">Загрузить<input type="file" accept="image/*" data-simg="'+k+'" hidden></label>'+(v?'<button class="mini danger" data-sclear="'+k+'">Убрать</button>':'')+'</div></div>';}
 function settingsTab(){var s=D.settings;
-  return '<div class="panel"><h4>Основное</h4><div class="two">'+sf("name","Название пиццерии")+sf("slogan","Слоган")+sf("city","Город")+sf("address","Адрес (для самовывоза)")+'</div>'+photoField("logo","Логотип")+photoField("hero","Фото на главной")+'</div>'+
+  return '<div class="panel"><h4>Основное</h4><div class="two">'+sf("name","Название пиццерии")+sf("slogan","Слоган")+sf("city","Город")+sf("address","Адрес (для самовывоза)")+'</div>'+photoField("logo","Логотип")+photoField("hero","Фото на главной (фон шапки)")+'</div>'+
   '<div class="panel"><h4>Связь</h4><div class="two">'+sf("whatsapp","WhatsApp для заказов","tel","+7 7__ ___ __ __")+sf("instagram","Instagram (без @)")+'</div><p class="hint">Все заказы приходят на этот номер WhatsApp.</p></div>'+
   '<div class="panel"><h4>Работа и доставка</h4><div class="two">'+sf("open","Открытие","time")+sf("close","Закрытие","time")+sf("deliveryFee","Цена доставки, ₸","number")+sf("freeFrom","Бесплатная доставка от, ₸ (0 — нет)","number")+sf("minOrder","Минимальный заказ, ₸ (0 — нет)","number")+'</div><label class="check"><input type="checkbox" data-s="pickup"'+(s.pickup?' checked':'')+'> Есть самовывоз</label>'+
   '<div class="f"><label>Объявление на главной</label><textarea data-s="notice">'+E(s.notice||"")+'</textarea></div></div>'+
   '<div class="panel"><h4>Устройство</h4><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" data-theme>Сменить тему</button><button class="ghost danger" data-logout>Выйти</button></div></div>';}
 function sheetHTML(){if(!sheet)return "";var it=sheet;
-  var badges=["","Хит","Новинка","Выгодно","Острая"];
+  var badges=["","Хит","Новинка","Выгодно","Острый"];
   return '<div class="sheet-scrim" data-close-scrim><div class="sheet" role="dialog" aria-modal="true"><div class="sh-head"><h3>'+(item(it.id)?'Изменить':'Новое блюдо')+'</h3><button class="icon-btn" data-close aria-label="Закрыть">✕</button></div>'+
-  '<div class="f"><label>Название *</label><input data-e="name" value="'+E(it.name)+'" placeholder="Например: Пепперони"></div>'+
+  '<div class="f"><label>Название *</label><input data-e="name" value="'+E(it.name)+'" placeholder="Например: Филадельфия"></div>'+
   '<div class="f"><label>Категория</label><select data-e="cat">'+D.categories.map(function(c){return '<option value="'+E(c.id)+'"'+(it.cat===c.id?' selected':'')+'>'+E(c.name)+'</option>';}).join("")+'</select></div>'+
   '<div class="two"><div class="f"><label>Цена, ₸ *</label><input data-e="price" type="number" inputmode="numeric" min="0" value="'+(+it.price||"")+'"></div><div class="f"><label>Старая цена, ₸ (для скидки)</label><input data-e="old" type="number" inputmode="numeric" min="0" value="'+(+it.old||"")+'"></div></div>'+
-  '<div class="two"><div class="f"><label>Размер / вес</label><input data-e="weight" value="'+E(it.weight)+'" placeholder="30 см, 0,5 л, 8 шт"></div><div class="f"><label>Наклейка</label><select data-e="badge">'+badges.map(function(b){return '<option value="'+b+'"'+((it.badge||"")===b?' selected':'')+'>'+(b||"— нет —")+'</option>';}).join("")+(badges.indexOf(it.badge||"")<0?'<option selected value="'+E(it.badge)+'">'+E(it.badge)+'</option>':'')+'</select></div></div>'+
-  '<div class="f"><label>Описание / состав</label><textarea data-e="desc" placeholder="Томатный соус, моцарелла…">'+E(it.desc)+'</textarea></div>'+
-  '<div class="f"><label>Фото</label><div class="photo"><div class="th">'+PZ.pic(it)+'</div><label class="ghost" style="cursor:pointer">'+(it.img?'Заменить':'Загрузить фото')+'<input type="file" accept="image/*" data-eimg hidden></label>'+(it.img?'<button class="mini danger" data-eclear>Убрать</button>':'')+'</div><p class="hint" style="margin:4px 0 0">Без фото показывается рисунок.</p></div>'+
+  '<div class="two"><div class="f"><label>Размер / вес</label><input data-e="weight" value="'+E(it.weight)+'" placeholder="36 шт, 30 см, 1 шт"></div><div class="f"><label>Наклейка</label><select data-e="badge">'+badges.map(function(b){return '<option value="'+b+'"'+((it.badge||"")===b?' selected':'')+'>'+(b||"— нет —")+'</option>';}).join("")+(badges.indexOf(it.badge||"")<0?'<option selected value="'+E(it.badge)+'">'+E(it.badge)+'</option>':'')+'</select></div></div>'+
+  '<div class="f"><label>Описание / состав</label><textarea data-e="desc" placeholder="Рис, нори, сыр, лосось…">'+E(it.desc)+'</textarea></div>'+
+  '<div class="f"><label>Фото</label><div class="photo"><div class="th">'+PZ.pic(it)+'</div><label class="ghost" style="cursor:pointer">'+(it.img?'Заменить':'Загрузить фото')+'<input type="file" accept="image/*" data-eimg hidden></label>'+(it.img?'<button class="mini danger" data-eclear>Убрать</button>':'')+'</div><p class="hint" style="margin:4px 0 0">Без фото позиция показывается компактной строкой с рисунком. С фото — большой карточкой.</p></div>'+
   '<label class="check"><input type="checkbox" data-e="hidden"'+(it.hidden?' checked':'')+'> Скрыть с сайта (например, закончилось)</label>'+
   '<div style="display:flex;gap:8px;justify-content:flex-end"><button class="ghost" data-close>Отмена</button><button class="btn" data-save>Готово</button></div><p class="hint" style="margin:0">После «Готово» нажмите <b>«Опубликовать»</b> сверху — тогда изменения появятся на сайте.</p></div></div>';}
 function render(){
   if(!D)return;var y=window.scrollY,focusId=document.activeElement&&document.activeElement.dataset&&(document.activeElement.dataset.q!==undefined?"q":null);
-  app.innerHTML='<div>'+top()+'<main class="wrap adm-body">'+(dirty()?'<div class="banner">Есть неопубликованные изменения. Нажмите «Опубликовать», чтобы их увидели клиенты.</div>':'')+(tab==="items"?itemsTab():tab==="cats"?catsTab():settingsTab())+'</main></div>'+sheetHTML();
+  PZ.setCats(D.categories);app.innerHTML='<div class="adm">'+top()+'<main class="wrap adm-body">'+(dirty()?'<div class="banner">Есть неопубликованные изменения. Нажмите «Опубликовать», чтобы их увидели клиенты.</div>':'')+(tab==="items"?itemsTab():tab==="cats"?catsTab():settingsTab())+'</main></div>'+sheetHTML();
   window.scrollTo(0,y);
   if(focusId==="q"){var el=document.querySelector("[data-q]");el.focus();el.setSelectionRange(el.value.length,el.value.length);}}
 function changed(){draft();var b=document.querySelector("[data-pub]");if(b){b.disabled=!dirty()||busy;b.textContent=busy?'Сохраняем…':dirty()?'Опубликовать':'Сохранено ✓';}
@@ -148,7 +149,7 @@ app.addEventListener("click",function(e){
     if(ex)D.items[D.items.indexOf(ex)]=sheet;else D.items.push(sheet);sheet=null;render();draft();toast("Готово. Не забудьте «Опубликовать»");}
   else if("eclear" in d){sheet.img="";render();}
   else if(d.sclear){D.settings[d.sclear]="";render();draft();}
-  else if("theme" in d){var r=document.documentElement,nt=r.dataset.theme==="light"?"dark":"light";r.dataset.theme=nt;PZ.lsSet("pz-theme",nt);}
+  else if("theme" in d){var r=document.documentElement,nt=r.dataset.theme==="light"?"dark":"light";r.dataset.theme=nt;PZ.lsSet("rollmi-theme",nt);}
   else if("logout" in d){if(dirty()&&!arm("logout",t))return;PZ.lsDel("pz-admin-token");PZ.lsDel("pz-admin-draft");token="";D=null;login();}
 });
 app.addEventListener("input",function(e){var t=e.target,d=t.dataset;
