@@ -48,22 +48,13 @@ function isBig(cat){return /pizza|big|combo/.test(cat)||items().some(function(i)
 function bar(){var n=count();if(!n)return "";
   return '<div class="bar"><div class="wrap"><button class="in" data-go="cart"><span><small>'+n+' шт · корзина</small><strong>'+M(subtotal())+'</strong></span><span class="cta">Оформить</span></button></div></div>';}
 
-
-function heroArt(){
-  var g='<circle cx="100" cy="100" r="94" fill="#b9722a"/><circle cx="100" cy="100" r="86" fill="#e4a64a"/><circle cx="100" cy="100" r="77" fill="#f7d676"/><circle cx="100" cy="100" r="77" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="3" stroke-dasharray="6 9"/>';
-  for(var i=0;i<4;i++){var a=i*45*Math.PI/180;g+='<line x1="'+(100-Math.cos(a)*77).toFixed(1)+'" y1="'+(100-Math.sin(a)*77).toFixed(1)+'" x2="'+(100+Math.cos(a)*77).toFixed(1)+'" y2="'+(100+Math.sin(a)*77).toFixed(1)+'" stroke="#8a4a10" stroke-opacity=".3" stroke-width="1.5"/>';}
-  [[0,46,12],[60,46,12],[120,46,12],[180,46,12],[240,46,12],[300,46,12],[30,66,8],[150,66,8],[270,66,8],[90,66,8],[210,66,8],[330,66,8]].forEach(function(p){var a=p[0]*Math.PI/180,x=100+Math.cos(a)*p[1],y=100+Math.sin(a)*p[1];g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+p[2]+'" fill="#c8331f"/><circle cx="'+(x-2).toFixed(1)+'" cy="'+(y-2).toFixed(1)+'" r="'+(p[2]*.5)+'" fill="#e0523a"/>';});
-  g+='<circle cx="100" cy="100" r="13" fill="#c8331f"/>';
-  [[20,56],[110,58],[200,54],[290,57]].forEach(function(p){var a=p[0]*Math.PI/180,x=100+Math.cos(a)*p[1],y=100+Math.sin(a)*p[1];g+='<path d="M0 0Q9-3 11-14Q1-12 0 0Z" fill="#3a8a2c" transform="translate('+x.toFixed(1)+' '+y.toFixed(1)+') rotate('+p[0]+')"/>';});
-  return '<svg class="hero-pz" viewBox="0 0 200 200" aria-hidden="true"><g class="spin">'+g+'</g></svg><span class="fl f1">🍅</span><span class="fl f2">🌿</span><span class="fl f3">🌶️</span>';}
-function ribbon(){var t=["Горячая пицца","Доставка по городу","Халал","Свежее тесто","Готовим по заказу"],h="";for(var k=0;k<4;k++)t.forEach(function(x){h+="<span>"+E(x)+"</span>";});return '<div class="ribbon" aria-hidden="true"><div class="rt">'+h+h+'</div></div>';}
 /* ---------- главная ---------- */
 function home(){
   var s=S.settings,open=PZ.isOpen(s),wa=waLink(),ig=(s.instagram||"").replace(/^@/,"").trim();
   var pop=items().filter(function(i){return i.badge;}).slice(0,8);if(pop.length<3)pop=items().slice(0,6);
   var cats=S.categories.filter(function(c){return items().some(function(i){return i.cat===c.id;});});
-  var h='<header class="hero'+(s.hero?' has-img':'')+'"'+(s.hero?' style="--hero:url(\''+E(s.hero)+'\')"':'')+'>'+(s.hero?'':heroArt())+'<div class="wrap hero-in"><div class="hero-top"><div class="logo">'+logo()+'</div><button class="icon-btn glass" data-theme aria-label="Тема">'+I.moon+'</button></div>'+
-    '<h1>'+E(s.name)+'</h1><p>'+E(s.slogan||"")+'</p><span class="pill"><i class="dot'+(open?'':' closed')+'"></i>'+(open?'Открыто до '+E(s.close):'Сейчас закрыто · откроемся в '+E(s.open))+(s.city?' · '+E(s.city):'')+'</span></div><div class="drip"></div></header>'+ribbon();
+  var h='<header class="hero'+(s.hero?' has-img':'')+'"'+(s.hero?' style="--hero:url(\''+E(s.hero)+'\')"':'')+'>'+(s.hero?'':'<div class="hero-pz">'+PZ.art({id:"hero7",name:"Пицца",cat:"pizza"},true)+'</div>')+'<div class="wrap hero-in"><div class="hero-top"><div class="logo">'+logo()+'</div><button class="icon-btn glass" data-theme aria-label="Тема">'+I.moon+'</button></div>'+
+    '<h1>'+E(s.name)+'</h1><p>'+E(s.slogan||"")+'</p><span class="pill"><i class="dot'+(open?'':' closed')+'"></i>'+(open?'Открыто до '+E(s.close):'Сейчас закрыто · откроемся в '+E(s.open))+(s.city?' · '+E(s.city):'')+'</span></div></header>';
   h+='<main class="wrap" style="padding-bottom:0"><div class="actions"><button class="act primary" data-go="menu"><span class="ic">'+I.pizza+'</span><span class="at"><b>Открыть меню и заказать</b><small>'+items().length+' позиций · доставка и самовывоз</small></span>'+I.arrow+'</button>';
   if(wa||ig){h+='<div class="act-row">';
     if(wa)h+='<a class="act sm wa" href="'+wa+'" target="_blank" rel="noopener"><span class="ic">'+I.wa+'</span><span class="at"><b>WhatsApp</b><small>'+E(s.whatsapp)+'</small></span></a>';
